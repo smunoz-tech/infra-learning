@@ -1,8 +1,8 @@
 # Configure the AWS Provider
 provider "aws" {
-    region = "us-west-2"  # Replace with your AWS region
-    profile = "beach-us-west-2"  # Replace with the name of your SSO profile
-  }
+  region  = var.aws_region       # Replace with your AWS region
+  profile = "beach-us-west-2" # Replace with the name of your SSO profile
+}
 
 #Retrieve the list of AZs in the current AWS region
 data "aws_availability_zones" "available" {}
@@ -51,8 +51,8 @@ resource "aws_route_table" "public_route_table" {
   vpc_id = aws_vpc.vpc.id
 
   route {
-    cidr_block     = "0.0.0.0/0"
-    gateway_id     = aws_internet_gateway.internet_gateway.id
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.internet_gateway.id
     #nat_gateway_id = aws_nat_gateway.nat_gateway.id
   }
   tags = {
@@ -65,7 +65,7 @@ resource "aws_route_table" "private_route_table" {
   vpc_id = aws_vpc.vpc.id
 
   route {
-    cidr_block     = "0.0.0.0/0"
+    cidr_block = "0.0.0.0/0"
     # gateway_id     = aws_internet_gateway.internet_gateway.id
     nat_gateway_id = aws_nat_gateway.nat_gateway.id
   }
@@ -114,5 +114,19 @@ resource "aws_nat_gateway" "nat_gateway" {
   subnet_id     = aws_subnet.public_subnets["public_subnet_1"].id
   tags = {
     Name = "demo_nat_gateway"
+  }
+}
+
+resource "aws_instance" "web" {
+  ami           = "ami-0f88e80871fd81e91"
+  instance_type = "t2.micro"
+
+  subnet_id              = aws_subnet.public_subnets["public_subnet_1"].id
+  vpc_security_group_ids = ["sg-06e0494db6cc95c63"]
+
+  tags = {
+    "Terraform" = "true"
+    "course" = "udemy-terraform-hands-on-labs"
+    "Name" = "demo-web"
   }
 }
