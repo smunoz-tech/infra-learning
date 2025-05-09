@@ -1,14 +1,30 @@
 # Configure the AWS Provider
 provider "aws" {
-  region  = var.aws_region       # Replace with your AWS region
-  profile = "beach-us-west-2" # Replace with the name of your SSO profile
+  region = "us-west-2"
 }
 
 #Retrieve the list of AZs in the current AWS region
 data "aws_availability_zones" "available" {}
 data "aws_region" "current" {}
 
-#Define the VPC
+# Terraform Data Block - Lookup Ubuntu 20.04
+data "aws_ami" "ubuntu" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  owners = ["099720109477"]
+}
+
+#Define the VPC 
 resource "aws_vpc" "vpc" {
   cidr_block = var.vpc_cidr
 
@@ -117,16 +133,13 @@ resource "aws_nat_gateway" "nat_gateway" {
   }
 }
 
-resource "aws_instance" "web" {
-  ami           = "ami-0f88e80871fd81e91"
-  instance_type = "t2.micro"
-
-  subnet_id              = aws_subnet.public_subnets["public_subnet_1"].id
-  vpc_security_group_ids = ["sg-06e0494db6cc95c63"]
-
+# Terraform Resource Block - To Build EC2 instance in Public Subnet
+resource "aws_instance" "web_server" {                            # BLOCK
+  ami           = data.aws_ami.ubuntu.id                          # Argument with data expression
+  instance_type = "t3.micro"                                      # Argument
+  subnet_id     = aws_subnet.public_subnets["public_subnet_1"].id # Argument with value as expression
   tags = {
-    "Terraform" = "true"
-    "course" = "udemy-terraform-hands-on-labs"
-    "Name" = "demo-web"
+    Name = "Web EC2 Server"
+    Terraform = "true"
   }
 }
