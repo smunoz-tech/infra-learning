@@ -1,6 +1,7 @@
 # Configure the AWS Provider
 provider "aws" {
   region = "us-west-2"
+  profile = "beach-us-west-2"  # Replace with the name of your SSO profile
 }
 
 #Retrieve the list of AZs in the current AWS region
@@ -139,7 +140,24 @@ resource "aws_instance" "web_server" {                            # BLOCK
   instance_type = "t3.micro"                                      # Argument
   subnet_id     = aws_subnet.public_subnets["public_subnet_1"].id # Argument with value as expression
   tags = {
-    Name = "Web EC2 Server"
+    Name      = "Web EC2 Server"
     Terraform = "true"
+  }
+}
+
+resource "aws_s3_bucket" "my-new-s3-bucket" {
+  bucket = "my-new-s3-bucket-sebs"
+
+  tags = {
+    Name      = "My s3 bucket"
+    Purpose   = "Terraform Hands-on Labs"
+    Terraform = "true"
+  }
+}
+
+resource "aws_s3_bucket_ownership_controls" "my_new_s3_bucket_acl" {
+  bucket = aws_s3_bucket.my-new-s3-bucket.id
+  rule {
+    object_ownership = "BucketOwnerPreferred"
   }
 }
